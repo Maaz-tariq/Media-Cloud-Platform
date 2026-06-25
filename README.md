@@ -138,9 +138,3 @@ backend/
 ├── .env.example      # Environment variable template
 └── server.js         # App entry point
 ```
-
----
-
-## License
-
-MIT
