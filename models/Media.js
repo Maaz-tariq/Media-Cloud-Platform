@@ -33,6 +33,10 @@ const mediaSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    storagePath: {
+    type: String,
+    required: true
+    },
   },
   {
     timestamps: true,

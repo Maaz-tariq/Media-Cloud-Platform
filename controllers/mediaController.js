@@ -60,7 +60,9 @@ const uploadMedia = async (req, res) => {
 
             fileSize: req.file.size,
 
-            fileUrl: publicUrl
+            fileUrl: publicUrl,
+
+            storagePath: uniqueName
 
         });
 
@@ -78,6 +80,26 @@ const uploadMedia = async (req, res) => {
     }
 };
 
+const getUserMedia = async (req, res) => {
+    try {
+        const media = await Media.find({
+            user: req.user._id
+        }).sort({
+            createdAt: -1
+        });
+
+        res.status(200).json(media);
+
+    } catch (error) {
+
+        res.status(500).json({
+            message: error.message
+        });
+
+    }
+}
+
 module.exports = {
-    uploadMedia
+    uploadMedia,
+    getUserMedia
 };

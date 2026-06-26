@@ -7,14 +7,12 @@ const protect = require("../middleware/authMiddleware");
 const upload = require("../middleware/uploadMiddleware");
 
 const {
-    uploadMedia
+    uploadMedia,
+    getUserMedia
 } = require("../controllers/mediaController");
 
-router.post(
-    "/upload",
-    protect,
-    upload.single("file"),
-    uploadMedia
-);
+router.get("/", protect, getUserMedia);
+
+router.post("/upload", protect, upload.single("file"), uploadMedia);
 
 module.exports = router;
