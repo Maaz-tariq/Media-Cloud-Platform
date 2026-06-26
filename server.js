@@ -1,11 +1,11 @@
 const express = require("express");
 const dotenv = require("dotenv");
+dotenv.config();
 const cors = require("cors");
 const authRoutes = require("./routes/authRoutes");
 const protect = require("./middleware/authMiddleware");
 const connectDB = require("./config/db");
-
-dotenv.config();
+const mediaRoutes = require("./routes/mediaRoutes");
 
 connectDB();
 
@@ -28,6 +28,8 @@ app.get("/api/profile", protect, (req, res) => {
         user: req.user
     });
 });
+
+app.use("/api/media", mediaRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
