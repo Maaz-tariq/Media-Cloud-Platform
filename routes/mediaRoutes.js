@@ -8,11 +8,40 @@ const upload = require("../middleware/uploadMiddleware");
 
 const {
     uploadMedia,
-    getUserMedia
+    getUserMedia,
+    deleteMedia,
+    searchMedia,
+    renameMedia
 } = require("../controllers/mediaController");
 
-router.get("/", protect, getUserMedia);
+router.get(
+    "/",
+    protect,
+    getUserMedia);
 
-router.post("/upload", protect, upload.single("file"), uploadMedia);
+router.post(
+    "/upload",
+    protect,
+    upload.single("file"),
+     uploadMedia);
+
+router.delete(
+    "/:id",
+    protect,
+    deleteMedia
+);
+
+router.get(
+    "/search",
+    protect,
+    searchMedia
+);
+
+router.patch(
+    "/:id/rename",
+    protect,
+    renameMedia
+)
+
 
 module.exports = router;
