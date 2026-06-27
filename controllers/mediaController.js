@@ -194,67 +194,29 @@ const renameMedia = async (req, res) => {
   }
 };
 
-const renameMedia = async (req, res) => {
+const searchMedia = async (req, res) => {
   try {
-    const { id } = req.params;
-    let { name } = req.body;
+    const { query, type } = req.query;
+    
+    // Scopes search results exclusively to the authenticated user
+    const searchQuery = { user: req.user._id };
 
-    if (typeof name !== "string" || !name || !name.trim()) {
-      return res.status(400).json({
-        message: "Filename cannot be empty or blank",
-      });
+    // Case-insensitive regex match for filenames if query string exists
+    if (query && query.trim()) {
+      searchQuery.fileName = { $regex: query.trim(), $options: "i" };
     }
 
-    name = name.trim();
-
-    if (name.length > 255) {
-      return res.status(400).json({
-        message: "Filename exceeds maximum length of 255 characters",
-      });
+    // Optional filtering by mediaType (image, video, audio, other)
+    if (type && type.trim()) {
+      searchQuery.mediaType = type.trim();
     }
 
-    const dangerousChars = /[\/\\:\*\?"<>\|]|\.\./;
-    if (dangerousChars.test(name)) {
-      return res.status(400).json({
-        message: "Invalid characters detected",
-      });
-    }
+    const media = await Media.find(searchQuery).sort({ createdAt: -1 });
 
-    const mediaItem = await Media.findOne({
-      _id: id,
-      user: req.user._id,
-    });
-
-    if (!mediaItem) {
-      return res.status(404).json({
-        message: "Media not found",
-      });
-    }
-
-    const lastDotIndex = mediaItem.fileName.lastIndexOf(".");
-
-    const extension =
-      lastDotIndex !== -1 ? mediaItem.fileName.substring(lastDotIndex) : "";
-
-    const newFileName = name + extension;
-
-    if (mediaItem.fileName === newFileName) {
-      return res.status(200).json({
-        message: "Filename is the same.",
-        media: mediaItem,
-      });
-    }
-
-    mediaItem.fileName = newFileName;
-    await mediaItem.save();
-
-    res.status(200).json({
-      message: "File renamed successfully",
-      media: mediaItem,
-    });
+    res.status(200).json(media);
   } catch (error) {
     res.status(500).json({
-      message: "Internal server error",
+      message: error.message || "Failed to search media files",
     });
   }
 };
