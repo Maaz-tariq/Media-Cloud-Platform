@@ -1,4 +1,6 @@
-const ShareLinkSchema = new Schema({
+const mongoose = require("mongoose")
+
+const ShareLinkSchema = new mongoose.Schema({
     mediaId: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: "Media", 
@@ -30,3 +32,5 @@ const ShareLinkSchema = new Schema({
 }, { 
     timestamps: true 
 });
+
+module.exports = { ShareLink: mongoose.model("ShareLink", ShareLinkSchema) };

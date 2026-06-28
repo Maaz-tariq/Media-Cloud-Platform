@@ -8,8 +8,10 @@ const createShareLink = async (req, res, next) => {
 
     const shareLink = await shareService.createShareLink(userId, mediaId, expiresInDays);
 
-    res.status(201).json({
-      message: "Share link created successfully",
+    const shareUrl = `${req.protocol}://${req.get('host')}/api/public/shares/${shareLink.token}`;
+
+    res.status(200).json({
+      message: "Share link retrieved successfully",
       shareUrl,
       shareLink
     });
@@ -35,7 +37,6 @@ const downloadSharedFile = async (req, res, next) => {
     const fileUrl = await shareService.processDownload(token);
 
     res.redirect(fileUrl);
-    
   } catch (error) {
     next(error);
   }

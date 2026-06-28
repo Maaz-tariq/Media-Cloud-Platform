@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const shareController = require('../controllers/shareController');
-const protect  = require('../middlewares/authMiddleware');
+const protect  = require('../middleware/authMiddleware');
 
 
 router.post('/media/:mediaId/shares', protect, shareController.createShareLink);

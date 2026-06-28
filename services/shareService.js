@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 const Media = require('../models/Media'); // Adjust path as needed
-const ShareLink = require('../models/ShareLink'); 
+const { ShareLink } = require('../models/ShareLink');
 const ApiError = require('../utils/ApiError'); // Adjust path as needed
 
 
@@ -8,25 +8,35 @@ const ApiError = require('../utils/ApiError'); // Adjust path as needed
 const createShareLink = async (userId, mediaId, expiresInDays) => {
 
   const media = await Media.findOne({ _id: mediaId, user: userId });
-  
   if (!media) {
-    throw new ApiError(404, "Media not found or you do not have permission to share it");
+    throw new ApiError(404, "Media not found or permission denied");
+  }
+
+  const existingLink = await ShareLink.findOne({ 
+    mediaId, 
+    owner: userId, 
+    isActive: true 
+  });
+  
+  if (existingLink) {
+    return existingLink;
   }
 
   const token = crypto.randomBytes(16).toString('hex');
 
+ 
   let expiresAt = null;
   if (expiresInDays) {
     const parsedDays = parseInt(expiresInDays, 10);
-    if (isNaN(parsedDays) || parsedDays < 1) {
-      throw new ApiError(400, "expiresInDays must be a valid number greater than 0");
+    if (isNaN(parsedDays) || parsedDays < 1 || parsedDays > 365) {
+      throw new ApiError(400, "Expiration must be between 1 and 365 days");
     }
     
     expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + parsedDays);
   }
 
-  const shareLink = await ShareLink.create({
+  return await ShareLink.create({
     mediaId,
     owner: userId,
     token,
@@ -34,23 +44,15 @@ const createShareLink = async (userId, mediaId, expiresInDays) => {
     isActive: true,
     downloads: 0
   });
-
-  return shareLink;
 };
 
+const validateShareLink = async (token) => {
+  
+  const link = await ShareLink.findOne({ token })
+    .populate('mediaId', 'fileName fileSize mediaType fileUrl');
 
-const getValidShareLink = async (token) => {
-
-  const link = await ShareLink.findOne({ token }).populate('mediaId');
-
-  if (!link) {
-    throw new ApiError(404, "Share link not found");
-  }
-
-  if (!link.isActive) {
-    throw new ApiError(410, "This share link has been revoked by the owner");
-  }
-
+  if (!link) throw new ApiError(404, "Share link not found");
+  if (!link.isActive) throw new ApiError(410, "This share link has been revoked");
   if (link.expiresAt && link.expiresAt < new Date()) {
     throw new ApiError(410, "This share link has expired");
   }
@@ -59,7 +61,7 @@ const getValidShareLink = async (token) => {
 };
 
 const getShareMetadata = async (token) => {
-  const link = await getValidShareLink(token);
+  const link = await validateShareLink(token);
   
   return {
     token: link.token,
@@ -73,10 +75,12 @@ const getShareMetadata = async (token) => {
 };
 
 const processDownload = async (token) => {
-  const link = await getValidShareLink(token);
+  const link = await validateShareLink(token);
 
-  link.downloads += 1;
-  await link.save();
+  await ShareLink.updateOne(
+    { _id: link._id }, 
+    { $inc: { downloads: 1 } }
+  );
 
   return link.mediaId.fileUrl; 
 };
