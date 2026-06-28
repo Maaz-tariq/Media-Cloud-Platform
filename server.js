@@ -6,6 +6,7 @@ const authRoutes = require("./routes/authRoutes");
 const protect = require("./middleware/authMiddleware");
 const connectDB = require("./config/db");
 const mediaRoutes = require("./routes/mediaRoutes");
+const shareRoutes = require('./routes/shareRoutes');
 
 connectDB();
 
@@ -30,6 +31,8 @@ app.get("/api/profile", protect, (req, res) => {
 });
 
 app.use("/api/media", mediaRoutes);
+
+app.use('/api', shareRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
