@@ -10,33 +10,9 @@ A cloud-based media management platform supporting video-to-podcast conversion, 
 
 ## High Level Design (HLD)
 
-```
-                        ┌─────────────────────────────────────────┐
-                        │        Backend — Node.js + Express       │
-                        │                                          │
-HTTP/HTTPS              │  ┌──────────────────────────────────┐   │     ┌─────────────────┐
-Client ────────────────►│  │     Routes / Controllers         │   │────►│  Cloud Storage  │
-(Web / App)             │  │  express-validator · cors        │   │     │   (Cloudinary)  │
-                        │  └─────────────┬────────────────────┘   │     └─────────────────┘
-                        │                │                         │
-                        │  ┌─────────────▼────────────────────┐   │     ┌─────────────────┐
-                        │  │          Middleware               │   │────►│    Database     │
-                        │  │   Auth (JWT) · multer            │   │     │  (MongoDB Atlas) │
-                        │  └─────────────┬────────────────────┘   │     └─────────────────┘
-                        │                │                         │
-                        │  ┌─────────────▼────────────────────┐   │     ┌─────────────────┐
-                        │  │           Services               │   │────►│ Authentication  │
-                        │  │  Business logic · Cloudinary     │   │     │  JWT · bcryptjs │
-                        │  └─────────────┬────────────────────┘   │     └─────────────────┘
-                        │                │                         │
-                        │  ┌─────────────▼────────────────────┐   │
-                        │  │       Mongoose Models             │   │
-                        │  │   User · Media · Folder          │   │
-                        │  └──────────────────────────────────┘   │
-                        │                                          │
-                        │         Environment Variables (.env)     │
-                        └─────────────────────────────────────────┘
-```
+
+<img width="1440" height="1080" alt="image" src="https://github.com/user-attachments/assets/3d77d8e5-3fd8-4fe2-afcf-4479a2857e7a" />
+
 
 ---
 
@@ -261,23 +237,8 @@ frontend/
 
 ## How It Works
 
-```
-User visits app
-      │
-      ▼
-  App.jsx checks AuthContext
-      │
-      ├── Not logged in ──► Login / Register page
-      │
-      └── Logged in ──► DashboardLayout
-                              │
-                    ┌─────────┴──────────┐
-                    │                    │
-                 Sidebar              Navbar
-                    │
-                Dashboard.jsx
-                    │
-          mediaService.js ──► axios.js ──► Backend API
-```
+
+<img width="1440" height="1000" alt="image" src="https://github.com/user-attachments/assets/6a357885-8d99-4ac5-a0f0-ee5e3f39795a" />
+
 
 ---
