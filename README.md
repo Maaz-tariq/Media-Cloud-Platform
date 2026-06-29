@@ -4,7 +4,7 @@ A cloud-based media management platform supporting video-to-podcast conversion, 
 
 ---
 
-# Media-Cloud-Platform — Frontend
+# Media-Cloud-Platform — Backend
 
 ---
 
