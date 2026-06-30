@@ -1,0 +1,1 @@
+connectionURL = mongodb+srv://<db_username>:MUBBGjv14OfcGpaC@cluster0.wbfldin.mongodb.net/?appName=Cluster0
