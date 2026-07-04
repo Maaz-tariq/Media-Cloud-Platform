@@ -89,27 +89,27 @@ const renameMedia = async (id, userId, name) => {
     throw error;
   }
 
-  let Tname = name.trim();
+  name = name.trim();
 
-  const userInputLastDot = Tname.lastIndexOf(".");
+  const userInputLastDot = name.lastIndexOf(".");
   if (userInputLastDot !== -1) {
-    Tname = Tname.substring(0, userInputLastDot);
+    name = name.substring(0, userInputLastDot);
   }
 
-  if (!Tname.trim()) {
+  if (!name.trim()) {
     const error = new Error("Filename body cannot be empty");
     error.status = 400;
     throw error;
   }
 
-  if (Tname.length > 255) {
+  if (name.length > 255) {
     const error = new Error("Filename exceeds maximum length of 255 characters");
     error.status = 400;
     throw error;
   }
 
   const dangerousChars = /[\/\\:\*\?"<>\|]|\.\./;
-  if (dangerousChars.test(Tname)) {
+  if (dangerousChars.test(name)) {
     const error = new Error("Invalid characters detected");
     error.status = 400;
     throw error;
@@ -125,7 +125,7 @@ const renameMedia = async (id, userId, name) => {
 
   const originalLastDotIndex = mediaItem.fileName.lastIndexOf(".");
   const extension = originalLastDotIndex !== -1 ? mediaItem.fileName.substring(originalLastDotIndex) : "";
-  const newFileName = Tname + extension;
+  const newFileName = name + extension;
 
   if (mediaItem.fileName === newFileName) {
     return mediaItem; 
