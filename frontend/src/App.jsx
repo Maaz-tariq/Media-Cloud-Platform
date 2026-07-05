@@ -3,6 +3,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard'; 
 import ProtectedRoute from './components/ProtectedRoute';
+import ShareView from './pages/ShareView';
 
 function App() {
   return (
@@ -22,6 +23,8 @@ function App() {
             </ProtectedRoute>
           } 
         />
+
+        <Route path="/share/:token" element={<ShareView />} />
       </Routes>
     </Router>
   );

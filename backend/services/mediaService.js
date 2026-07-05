@@ -190,7 +190,37 @@ const searchMedia = async (userId, options) => {
   };
 };
 
+const createShareLink = async (id, userId) => {
+    const mediaItem = await Media.findOne({ _id: id, user: userId });
+
+    if (!mediaItem) {
+        const error = new Error("Media not found or unauthorized");
+        error.status = 404;
+        throw error;
+    }
+
+    mediaItem.isShared = true;
+    mediaItem.sharedAt = new Date();
+    await mediaItem.save();
+
+    return mediaItem;
+};
+
+const getSharedMedia = async (id) => {
+    const mediaItem = await Media.findById(id);
+
+    if (!mediaItem || !mediaItem.isShared) {
+        const error = new Error("This share link is invalid, expired, or private");
+        error.status = 404;
+        throw error;
+    }
+
+    return mediaItem;
+};
+
 module.exports = {
+  getSharedMedia,
+  createShareLink,
   uploadMedia,
   getUserMedia,
   deleteMedia,

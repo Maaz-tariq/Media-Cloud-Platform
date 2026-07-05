@@ -75,7 +75,44 @@ const searchMedia = async (req, res, next) => {
   }
 };
 
+const createShareLink = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user._id || req.user.id;
+
+        const media = await mediaService.createShareLink(id, userId);
+
+        // Construct the full URL pointing to your frontend deployment
+        // In production, this would use an environment variable like process.env.FRONTEND_URL
+        const shareUrl = `http://localhost:5173/share/${media._id}`;
+
+        res.status(200).json({
+            success: true,
+            message: "Share link generated successfully",
+            link: shareUrl
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
+const getSharedMedia = async (req, res, next) => {
+    try {
+        const { id } = req.params;
+        const media = await mediaService.getSharedMedia(id);
+
+        res.status(200).json({
+            success: true,
+            media
+        });
+    } catch (error) {
+        next(error);
+    }
+};
+
 module.exports = {
+  getSharedMedia,
+  createShareLink,
   uploadMedia,
   getUserMedia,
   deleteMedia,

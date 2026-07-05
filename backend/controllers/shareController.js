@@ -3,7 +3,9 @@ const shareService = require("../services/shareService");
 const createShareLink = async (req, res, next) => {
   try {
     const { mediaId } = req.params;
-    const { expiresInDays } = req.body; 
+    
+    const { expiresInDays } = req.body || {}; 
+    
     const userId = req.user._id;
 
     const shareLink = await shareService.createShareLink(userId, mediaId, expiresInDays);
@@ -34,9 +36,12 @@ const getShareMetadata = async (req, res, next) => {
 const downloadSharedFile = async (req, res, next) => {
   try {
     const { token } = req.params;
-    const fileUrl = await shareService.processDownload(token);
+    
+    const { fileUrl, fileName } = await shareService.processDownload(token);
 
-    res.redirect(fileUrl);
+    const forceDownloadUrl = `${fileUrl}?download=${encodeURIComponent(fileName)}`;
+
+    res.redirect(forceDownloadUrl);
   } catch (error) {
     next(error);
   }

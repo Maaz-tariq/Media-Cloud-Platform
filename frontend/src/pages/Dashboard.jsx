@@ -5,11 +5,12 @@ import { getMedia, deleteMedia, createShareLink } from '../services/mediaService
 import MediaGrid from '../components/MediaGrid';
 import UploadModal from '../components/UploadModal';
 import RenameModal from '../components/RenameModal';
+import ShareModal from '../components/ShareModal';
 
 const Dashboard = () => {
     const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate(); 
-    
+
     const [mediaList, setMediaList] = useState([]);
     const [activeRenameItem, setActiveRenameItem] = useState(null);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -18,6 +19,9 @@ const Dashboard = () => {
     const [toast, setToast] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+
+    const [activeShareItem, setActiveShareItem] = useState(null);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
     const showToast = (message) => {
         setToast(message);
@@ -66,7 +70,7 @@ const Dashboard = () => {
     // --- DELETE HANDLER ---
     const handleDeleteTrigger = async (mediaItem) => {
         // Native browser confirmation is the cleanest UX for destructive actions
-        const confirmDelete = window.confirm(`Are you sure you want to delete "${mediaItem.filename}"?`);
+        const confirmDelete = window.confirm(`Are you sure you want to delete "${mediaItem.fileName}"?`);
         if (!confirmDelete) return;
 
         try {
@@ -80,18 +84,9 @@ const Dashboard = () => {
     };
 
     // --- SHARE HANDLER ---
-    const handleShareTrigger = async (mediaItem) => {
-        try {
-            const data = await createShareLink(mediaItem._id);
-            // The backend should return the generated share link (e.g., data.link or data.url)
-            const shareUrl = data.link || data.url || `http://localhost:5173/share/${data.shareId}`;
-            
-            // Copy to user's clipboard
-            await navigator.clipboard.writeText(shareUrl);
-            showToast("🔗 Link copied to clipboard!");
-        } catch (err) {
-            alert(err.response?.data?.message || "Failed to create share link.");
-        }
+    const handleShareTrigger = (mediaItem) => {
+        setActiveShareItem(mediaItem);
+        setIsShareModalOpen(true);
     };
 
     // --- DOWNLOAD HANDLER ---
@@ -170,6 +165,15 @@ const Dashboard = () => {
                     mediaItem={activeRenameItem}
                     onRenameSuccess={handleRenameSuccess}
                 />
+
+                <ShareModal 
+                isOpen={isShareModalOpen}
+                onClose={() => {
+                    setIsShareModalOpen(false);
+                    setActiveShareItem(null);
+                }}
+                mediaItem={activeShareItem}
+            />
             </main>
         </div>
     );

@@ -82,7 +82,10 @@ const processDownload = async (token) => {
     { $inc: { downloads: 1 } }
   );
 
-  return link.mediaId.fileUrl; 
+  return {
+    fileUrl: link.mediaId.fileUrl,
+    fileName: link.mediaId.fileName
+  };
 };
 
 const listShareLinks = async (userId, mediaId) => {

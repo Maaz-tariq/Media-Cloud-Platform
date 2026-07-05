@@ -6,12 +6,17 @@ const protect = require("../middleware/authMiddleware");
 
 const upload = require("../middleware/uploadMiddleware");
 
+
+
 const {
+    getSharedMedia,
+    createShareLink,
     uploadMedia,
     getUserMedia,
     deleteMedia,
     searchMedia,
-    renameMedia
+    renameMedia,
+    
 } = require("../controllers/mediaController");
 
 router.get(
@@ -42,6 +47,17 @@ router.patch(
     protect,
     renameMedia
 )
+
+router.post(
+    '/:id/share',
+     protect,
+    createShareLink
+);
+
+router.get(
+    '/public/share/:id',
+    getSharedMedia
+);
 
 
 module.exports = router;

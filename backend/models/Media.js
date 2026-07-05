@@ -37,6 +37,14 @@ const mediaSchema = new mongoose.Schema(
     type: String,
     required: true
     },
+    isShared: {
+        type: Boolean,
+        default: false
+    },
+    sharedAt: {
+        type: Date
+    }
+
   },
   {
     timestamps: true,
