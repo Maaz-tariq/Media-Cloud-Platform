@@ -35,31 +35,18 @@ const ActionMenu = ({ onRename, onDelete, onShare, onDownload }) => {
             </button>
 
             {isOpen && (
-                <div className="action-menu-dropdown" style={{
-                    position: 'absolute',
-                    right: 0,
-                    top: '100%',
-                    backgroundColor: '#fff',
-                    border: '1px solid #e0e0e0',
-                    borderRadius: '6px',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                    zIndex: 50,
-                    minWidth: '140px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden'
-                }}>
-                    <button onClick={() => handleAction(onRename)} className="menu-item">
+                <div className="bg-white border border-gray-100 shadow-lg rounded-xl p-2 flex flex-col gap-1 text-sm">
+                    <button onClick={() => handleAction(onRename)} className="px-3 py-1 hover:bg-gray-50 text-left">
                         Rename
                     </button>
-                    <button onClick={() => handleAction(onDownload)} className="menu-item">
+                    <button onClick={() => handleAction(onDownload)} className="px-3 py-1 hover:bg-gray-50 text-left">
                         Download
                     </button>
-                    <button onClick={() => handleAction(onShare)} className="menu-item">
+                    <button onClick={() => handleAction(onShare)} className="px-3 py-1 hover:bg-gray-50 text-left">
                         Share
                     </button>
                     <div style={{ height: '1px', backgroundColor: '#e0e0e0', margin: '4px 0' }}></div>
-                    <button onClick={() => handleAction(onDelete)} className="menu-item" style={{ color: '#dc3545' }}>
+                    <button onClick={() => handleAction(onDelete)} className="px-3 py-1 hover:bg-gray-50 text-left text-red-600">
                         Delete
                     </button>
                 </div>

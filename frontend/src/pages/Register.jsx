@@ -41,16 +41,19 @@ const Register = () => {
     };
 
     return (
-        <div className="auth-container">
-            <h2>Create an Account</h2>
-            
-            {error && <div className="error-message">{error}</div>}
-            
-            <form onSubmit={handleSubmit}>
-                <div className="form-group">
-                    <label htmlFor="name">Full Name</label>
+         <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
+            <div className="bg-white p-10 rounded-3xl shadow-xl w-full max-w-sm border border-gray-100">
+
+
+                <h2 className="text-3xl font-extrabold mb-8 text-center text-gray-900">Create Account</h2>
+
+                {error && <div className="error-message">{error}</div>}
+
+
+                <form onSubmit={handleSubmit} className="flex flex-col gap-4">
                     <input 
                         type="text" 
+                        placeholder="Full Name"  
                         id="name"
                         name="name"
                         value={formData.name}
@@ -58,28 +61,22 @@ const Register = () => {
                         required 
                         disabled={loading}
                         autoFocus
-                        className="form-input"
+                        className="w-full px-5 py-3 rounded-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all" 
                     />
-                </div>
-
-                <div className="form-group">
-                    <label htmlFor="email">Email</label>
                     <input 
                         type="email" 
+                        placeholder="Email" 
                         id="email"
                         name="email"
                         value={formData.email}
                         onChange={handleChange} 
                         required 
                         disabled={loading}
-                        className="form-input"
+                        className="w-full px-5 py-3 rounded-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all" 
                     />
-                </div>
-                
-                <div className="form-group">
-                    <label htmlFor="password">Password</label>
                     <input 
                         type="password" 
+                        placeholder="Password" 
                         id="password"
                         name="password"
                         value={formData.password}
@@ -87,18 +84,20 @@ const Register = () => {
                         required 
                         disabled={loading}
                         minLength="6"
-                        className="form-input"
+                        className="w-full px-5 py-3 rounded-full bg-gray-50 border border-gray-200 focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none transition-all" 
                     />
-                </div>
-                
-                <button type="submit" disabled={loading} className="submit-btn">
-                    {loading ? 'Creating Account...' : 'Register'}
-                </button>
-            </form>
-            
-            <p className="auth-link">
+                    <button 
+                        type="submit" 
+                        disabled={loading} 
+                        className="w-full bg-green-600 text-white font-bold py-3 rounded-full hover:bg-green-700 mt-2 transition-colors shadow-md hover:shadow-lg"
+                    >
+                        {loading ? 'Creating Account...' : 'Register'}
+                    </button>
+                </form>
+                <p className="auth-link">
                 Already have an account? <Link to="/login">Login here</Link>
             </p>
+            </div>
         </div>
     );
 };

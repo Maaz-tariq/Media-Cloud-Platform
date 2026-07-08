@@ -15,9 +15,9 @@ const FileCard = ({ media, onRenameTrigger, onDeleteTrigger, onShareTrigger, onD
     const handleDownload = () => onDownloadTrigger && onDownloadTrigger(media);
 
     return (
-        <div className="file-card" style={{ position: 'relative', display: 'flex', flexDirection: 'column', backgroundColor: '#1e1e1e', border: '1px solid #333', borderRadius: '8px', padding: '10px' }}>
+        <div className="relative flex flex-col bg-white rounded-3xl p-5 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300">
             
-            <div style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 10 }}>
+            <div  className="absolute top-5 right-5 z-10">
                 <ActionMenu 
                     onRename={handleRename}
                     onDownload={handleDownload}
@@ -27,25 +27,25 @@ const FileCard = ({ media, onRenameTrigger, onDeleteTrigger, onShareTrigger, onD
             </div>
 
     
-            <div className="file-preview" style={{ width: '100%', height: '140px', backgroundColor: '#2d2d2d', borderRadius: '6px', marginBottom: '10px', overflow: 'hidden', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <div className="w-full h-32 bg-gray-50 rounded-2xl mb-4 overflow-hidden flex justify-center items-center border border-gray-100">
                 {media.mediaType?.includes('image') && media.fileUrl ? (
                 
                     <img 
                         src={media.fileUrl} 
                         alt={media.fileName} 
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                        className="w-full h-full object-cover"
                     />
                 ) : (
                
-                    <span style={{ fontSize: '3rem' }}>📄</span>
+                    <span className="text-5xl">📄</span>
                 )}
             </div>
             
-            <div className="file-details" style={{ color: '#fff' }}>
-                <h4 className="file-name" title={media.fileName} style={{ margin: '0 0 5px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '1rem' }}>
+            <div className="truncate">
+                <h4  title={media.fileName} className="font-bold text-gray-900 mb-1 truncate text-lg">
                     {media.fileName}
                 </h4>
-                <p className="file-meta" style={{ fontSize: '0.85rem', color: '#888', margin: 0 }}>
+                <p className="text-sm text-gray-500 font-medium">
                     {formatSize(media.fileSize)} • {new Date(media.createdAt).toLocaleDateString()}
                 </p>
             </div>

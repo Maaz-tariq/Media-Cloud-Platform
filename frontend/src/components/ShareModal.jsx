@@ -1,78 +1,86 @@
-import { useState, useEffect } from 'react';
-import { createShareLink } from '../services/mediaService';
+import React, { useState } from 'react';
+
+// MOCK SERVICE FOR CANVAS PREVIEW
+// In your real project, delete this mock and use: 
+// import { createShareLink } from '../services/mediaService';
+const createShareLink = async (id) => new Promise(resolve => setTimeout(() => resolve({ shareToken: 'mock-token-123' }), 1000));
 
 const ShareModal = ({ isOpen, onClose, mediaItem }) => {
-    const [shareUrl, setShareUrl] = useState('');
+    const [shareLink, setShareLink] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);
     const [copied, setCopied] = useState(false);
 
- 
-    useEffect(() => {
-        const generateLink = async () => {
-            if (!mediaItem || !isOpen) return;
-            
-            setLoading(true);
-            setError(null);
-            setCopied(false);
-            setShareUrl('');
-
-            try {
-                const data = await createShareLink(mediaItem._id);
-                const frontendUrl = `${window.location.origin}/share/${data.shareLink.token}`;
-                setShareUrl(frontendUrl);
-            } catch (err) {
-                setError(err.response?.data?.message || "Failed to generate share link.");
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        generateLink();
-    }, [mediaItem, isOpen]);
-
     if (!isOpen || !mediaItem) return null;
 
-    const handleCopy = async () => {
+    const handleGenerateLink = async () => {
         try {
-            await navigator.clipboard.writeText(shareUrl);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000); 
+            setLoading(true);
+            setError(null);
+            const data = await createShareLink(mediaItem._id);
+            // Assuming the backend returns { shareToken: 'xyz...' }
+            const link = `${window.location.origin}/share/${data.shareToken}`;
+            setShareLink(link);
+            setCopied(false);
         } catch (err) {
-            console.error("Failed to copy", err);
+            setError(err.response?.data?.message || "Failed to generate link.");
+        } finally {
+            setLoading(false);
         }
     };
 
+    const handleCopy = () => {
+        navigator.clipboard.writeText(shareLink);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     return (
-        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100 }}>
-            <div className="modal-content" style={{ backgroundColor: '#fff', padding: '2rem', borderRadius: '8px', minWidth: '400px', color: '#333' }}>
-                <h3>Share "{mediaItem.fileName || 'File'}"</h3>
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md border border-gray-100 transform transition-all">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-2xl font-extrabold text-gray-900">Share File</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-900 transition-colors text-2xl leading-none">&times;</button>
+                </div>
+
+                <div className="bg-blue-50 text-blue-800 p-4 rounded-2xl text-center font-medium mb-6 text-sm">
+                    Generate a secure, public link to share <strong className="block mt-1 text-blue-900 truncate">{mediaItem.fileName}</strong>
+                </div>
                 
-                {error && <div style={{ color: '#dc3545', marginBottom: '1rem' }}>{error}</div>}
-                {loading && <div>Generating secure link...</div>}
+                {error && <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-center font-bold mb-6 text-sm">{error}</div>}
                 
-                {!loading && shareUrl && (
-                    <div style={{ margin: '1.5rem 0', display: 'flex', gap: '10px' }}>
-                        <input 
-                            type="text" 
-                            readOnly 
-                            value={shareUrl}
-                            style={{ flex: 1, padding: '10px', backgroundColor: '#f1f3f5', border: '1px solid #ccc', borderRadius: '4px' }}
-                        />
+                {!shareLink ? (
+                    <button 
+                        onClick={handleGenerateLink} 
+                        disabled={loading}
+                        className={`w-full px-6 py-4 font-bold rounded-full text-white transition-all shadow-md flex justify-center items-center gap-2 ${
+                            loading ? 'bg-green-400 cursor-not-allowed' : 'bg-green-500 hover:bg-green-600 hover:shadow-lg'
+                        }`}
+                    >
+                        <span>{loading ? 'Generating...' : 'Generate Share Link'}</span>
+                        {!loading && <span>🔗</span>}
+                    </button>
+                ) : (
+                    <div className="flex flex-col gap-4">
+                        <div>
+                            <label className="block text-sm font-bold text-gray-900 mb-2">Public Link</label>
+                            <input 
+                                type="text" 
+                                readOnly 
+                                value={shareLink} 
+                                className="w-full px-5 py-3 rounded-full bg-gray-50 border border-gray-200 text-gray-600 font-medium focus:outline-none"
+                            />
+                        </div>
                         <button 
-                            onClick={handleCopy}
-                            style={{ padding: '10px 16px', backgroundColor: copied ? '#28a745' : '#007bff', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', transition: 'background-color 0.2s' }}
+                            onClick={handleCopy} 
+                            className={`w-full px-6 py-4 font-bold rounded-full transition-all shadow-md flex justify-center items-center gap-2 ${
+                                copied ? 'bg-gray-900 text-white' : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg'
+                            }`}
                         >
-                            {copied ? 'Copied!' : 'Copy'}
+                            {copied ? '✅ Copied to Clipboard!' : 'Copy Link'}
                         </button>
                     </div>
                 )}
-
-                <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
-                    <button onClick={onClose} style={{ padding: '8px 16px', backgroundColor: '#e9ecef', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                        Close
-                    </button>
-                </div>
             </div>
         </div>
     );

@@ -1,5 +1,9 @@
-import { useState, useEffect } from 'react';
-import { renameMedia } from '../services/mediaService';
+import React, { useState, useEffect } from 'react';
+
+// MOCK SERVICE FOR CANVAS PREVIEW
+// In your real project, delete this mock and use: 
+// import { updateMediaName } from '../services/mediaService';
+const updateMediaName = async (id, name) => new Promise(resolve => setTimeout(() => resolve({ fileName: name }), 1000));
 
 const RenameModal = ({ isOpen, onClose, mediaItem, onRenameSuccess }) => {
     const [newName, setNewName] = useState('');
@@ -8,74 +12,66 @@ const RenameModal = ({ isOpen, onClose, mediaItem, onRenameSuccess }) => {
 
     useEffect(() => {
         if (mediaItem) {
-
-            setNewName(mediaItem.fileName || ''); 
-            setError(null);
+            setNewName(mediaItem.fileName);
         }
-    }, [mediaItem, isOpen]);
+    }, [mediaItem]);
 
     if (!isOpen || !mediaItem) return null;
 
-    const handleSubmit = async (e) => {
+    const handleRename = async (e) => {
         e.preventDefault();
-        
-        if (loading || !newName?.trim() || newName?.trim() === mediaItem.fileName) {
-            onClose(); 
-            return;
-        }
-
-        setLoading(true);
-        setError(null);
+        if (!newName.trim() || newName === mediaItem.fileName) return;
 
         try {
-            const updatedData = await renameMedia(mediaItem._id, newName.trim());
-            onRenameSuccess(mediaItem._id, updatedData.media || updatedData);
+            setLoading(true);
+            setError(null);
+            const updatedItem = await updateMediaName(mediaItem._id, newName);
+            if (onRenameSuccess) onRenameSuccess(mediaItem._id, updatedItem);
             onClose();
         } catch (err) {
-            setError(err.response?.data?.message || "Failed to rename file. Please try again.");
+            setError(err.response?.data?.message || "Failed to rename file.");
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div className="modal-overlay" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1100 }}>
-            <div className="modal-content" style={{ backgroundColor: '#fff', padding: '2rem', borderRadius: '8px', minWidth: '400px' }}>
-                <h3>Rename File</h3>
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-900/40 backdrop-blur-sm z-50 p-4">
+            <div className="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-md border border-gray-100 transform transition-all">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-2xl font-extrabold text-gray-900">Rename File</h3>
+                    <button onClick={onClose} className="text-gray-400 hover:text-gray-900 transition-colors text-2xl leading-none">&times;</button>
+                </div>
                 
-                {error && <div className="error-message" style={{ color: '#dc3545', marginBottom: '1rem' }}>{error}</div>}
+                {error && <div className="bg-red-50 text-red-600 p-4 rounded-2xl text-center font-bold mb-6 text-sm">{error}</div>}
                 
-                <form onSubmit={handleSubmit}>
-                    <div style={{ margin: '1.5rem 0' }}>
+                <form onSubmit={handleRename} className="flex flex-col gap-6">
+                    <div>
+                        <label className="block text-sm font-bold text-gray-900 mb-2">New File Name</label>
                         <input 
                             type="text" 
-                            value={newName}
-                            onChange={(e) => {
-                                if (error) setError(null);
-                                setNewName(e.target.value);
-                            }}
-                            disabled={loading}
-                            required
+                            value={newName} 
+                            onChange={(e) => setNewName(e.target.value)} 
+                            className="w-full px-5 py-3 rounded-full bg-gray-50 border border-gray-200 focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium transition-colors"
                             autoFocus
-                            style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
                         />
                     </div>
-
-                    <div className="modal-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                    <div className="flex gap-3 mt-2">
                         <button 
-                            type="button"
-                            onClick={onClose}
-                            disabled={loading}
-                            style={{ padding: '8px 16px', backgroundColor: '#f1f3f5', border: 'none', borderRadius: '4px', cursor: 'pointer', color: 'black' }}
+                            type="button" 
+                            onClick={onClose} 
+                            className="flex-1 px-6 py-3 bg-gray-100 text-gray-900 font-bold rounded-full hover:bg-gray-200 transition-colors"
                         >
                             Cancel
                         </button>
                         <button 
-                            type="submit"
-                            disabled={loading || !newName?.trim()}
-                            style={{ padding: '8px 16px', backgroundColor: '#007bff', color: '#fff', border: 'none', borderRadius: '4px', cursor: loading ? 'not-allowed' : 'pointer' }}
+                            type="submit" 
+                            disabled={!newName.trim() || newName === mediaItem.fileName || loading} 
+                            className={`flex-1 px-6 py-3 font-bold rounded-full text-white transition-all shadow-md ${
+                                !newName.trim() || newName === mediaItem.fileName || loading ? 'bg-yellow-400 cursor-not-allowed' : 'bg-yellow-500 hover:bg-yellow-600 hover:shadow-lg'
+                            }`}
                         >
-                            {loading ? 'Saving...' : 'Save'}
+                            {loading ? 'Saving...' : 'Save Name'}
                         </button>
                     </div>
                 </form>

@@ -150,59 +150,61 @@ const fetchMedia = useCallback(async () => {
     };
 
     return (
-        <div className="dashboard-layout">
+        <div className="min-h-screen bg-slate-50 text-gray-900 font-sans selection:bg-blue-200">
             {toast && (
-                <div style={{ position: 'fixed', top: '20px', right: '20px', backgroundColor: '#333', color: 'white', padding: '12px 24px', borderRadius: '4px', boxShadow: '0 2px 5px rgba(0,0,0,0.2)', zIndex: 1000 }}>
+                <div className="fixed top-6 right-6 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg z-50 font-bold animate-bounce">
                     {toast}
                 </div>
             )}
 
-            <header className="dashboard-header" style={{ display: 'flex', justifyContent: 'space-between', padding: '1rem', borderBottom: '1px solid #ccc' }}>
-                <div className="header-brand">
-                    <h2>Media Cloud</h2>
+            <header className="flex justify-between items-center px-8 py-5 bg-white  shadow-sm border-b border-gray-100">
+                <div className="flex items-center gap-3">
+                    <span className="text-black font-bold text-xl">Media Cloud</span>
                 </div>
-                <div className="header-actions">
-                    <span className="user-greeting" style={{ marginRight: '15px' }}>Welcome, {user?.name}</span>
-                    <button onClick={handleLogout} className="logout-btn" style={{ padding: '8px 16px', cursor: 'pointer' }}>
+                <div className="flex items-center gap-6">
+                    <span className="text-gray-600 font-medium">Welcome, {user?.name}</span>
+                    <button onClick={handleLogout}  className="px-6 py-2.5 bg-gray-100 text-black-900 font-bold rounded-full hover:bg-gray-200 transition-colors" >
                         Logout
                     </button>
                 </div>
             </header>
 
-            <main className="dashboard-content" style={{ padding: '2rem' }}>
+            <main className="max-w-7xl mx-auto px-8 py-10">
                 
-                
-                <div className="toolbar" style={{ display: 'flex', gap: '15px', marginBottom: '20px', flexWrap: 'wrap' }}>
+            <div  className="flex flex-col md:flex-row gap-4 mb-10 items-center justify-between">
+                <div  className="flex flex-wrap gap-4 w-full md:w-auto flex-1">
                     <input 
                         type="text" 
                         placeholder="Search files..."
                         value={search}
                         onChange={handleSearchChange}
-                        className="search-input"
-                        style={{ flex: 1, minWidth: '200px', padding: '10px', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#222', color: 'white' }}
+                        className="flex-1 md:min-w-[300px] px-6 py-3 rounded-full bg-white border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
                     />
                     
                     <FilterDropdown value={type} onChange={handleTypeChange} />
                     <SortDropdown value={sort} onChange={handleSortChange} />
                 </div>
+            </div>
 
                 <div className="content-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h3>Your Files</h3>
                     <button 
-                        className="upload-btn"
+                        
                         onClick={() => setIsUploadModalOpen(true)}
-                        style={{ padding: '10px 20px', backgroundColor: '#007bff', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                        className="w-full md:w-auto px-8 py-3 bg-gray-900 text-white font-bold rounded-full shadow-md hover:bg-gray-800 transition-colors transform hover:-translate-y-0.5"
                     >
                         Upload File
                     </button>
                 </div>
 
-                {loading && <div className="loading-spinner">Loading your files...</div>}
-                {error && <div className="error-banner" style={{ color: '#dc3545', marginBottom: '20px' }}>{error}</div>}
+                {loading && <div className="flex justify-center items-center py-20">Loading your files...</div>}
+                {error && <div className="bg-red-50 text-red-600 p-6 rounded-3xl text-center font-bold border border-red-100 mb-8">{error}</div>}
                 
                 {!loading && !error && mediaList.length === 0 && (
-                    <div style={{ textAlign: 'center', color: '#888', marginTop: '50px' }}>
-                        <p>No files found matching your criteria.</p>
+                    <div className="text-center bg-white p-20 rounded-3xl border border-gray-100 shadow-sm mt-10">
+                        <span className="text-6xl mb-4 block">👻</span>
+                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Nothing is here</h3>
+                        <p className="text-gray-500 font-medium">No files found matching your criteria.</p>
                     </div>
                 )}
 
