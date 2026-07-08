@@ -49,8 +49,50 @@ const uploadMedia = async (file, userId) => {
   return media;
 };
 
-const getUserMedia = async (userId) => {
-  return await Media.find({ user: userId }).sort({ createdAt: -1 });
+const getUserMedia = async (userId, queryParams = {}) => {
+    const { search, sort, type, page = 1 } = queryParams;
+
+    // 1. Base query: only fetch this specific user's files
+    let query = { user: userId };
+
+    // 2. Search Filter
+    if (search) {
+        query.fileName = { $regex: search, $options: 'i' };
+    }
+
+    // 3. Type Filter (💡 THIS FIXES YOUR BUG!)
+    if (type) {
+        // e.g., if type is "video", this will match "video/mp4", "video/quicktime", etc.
+        query.mediaType = { $regex: type, $options: 'i' };
+    }
+
+    // 4. Sort Logic
+    let sortOption = { createdAt: -1 }; // Default: newest
+    if (sort === 'oldest') sortOption = { createdAt: 1 };
+    if (sort === 'largest') sortOption = { fileSize: -1 };
+    if (sort === 'smallest') sortOption = { fileSize: 1 };
+
+    // 5. Pagination Logic
+    const limit = 10; // Number of files per page
+    const skip = (parseInt(page) - 1) * limit;
+
+    // 6. Execute the database query
+    const media = await Media.find(query)
+        .sort(sortOption)
+        .skip(skip)
+        .limit(limit);
+
+    // 7. Calculate total pages for the frontend pagination component
+    const totalResults = await Media.countDocuments(query);
+    const totalPages = Math.ceil(totalResults / limit);
+
+    // 8. Return the structured object that your frontend is now expecting
+    return {
+        media,
+        currentPage: parseInt(page),
+        totalPages,
+        totalResults
+    };
 };
 
 const deleteMedia = async (mediaId, userId) => {

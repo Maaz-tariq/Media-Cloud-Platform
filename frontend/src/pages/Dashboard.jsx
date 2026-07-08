@@ -1,11 +1,15 @@
-import { useEffect, useState, useContext } from 'react';
+import { useEffect, useState, useContext, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { getMedia, deleteMedia, createShareLink } from '../services/mediaService';
+import { getMedia, deleteMedia } from '../services/mediaService';
 import MediaGrid from '../components/MediaGrid';
 import UploadModal from '../components/UploadModal';
 import RenameModal from '../components/RenameModal';
 import ShareModal from '../components/ShareModal';
+import SortDropdown from '../components/SortDropdown';
+import FilterDropdown from '../components/FilterDropdown'; 
+import Pagination from '../components/Pagination'; 
+import { useDebounce } from '../hooks/useDebounce';
 
 const Dashboard = () => {
     const { user, logout } = useContext(AuthContext);
@@ -15,46 +19,90 @@ const Dashboard = () => {
     const [activeRenameItem, setActiveRenameItem] = useState(null);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
+    const [activeShareItem, setActiveShareItem] = useState(null);
+    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
     
     const [toast, setToast] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    const [activeShareItem, setActiveShareItem] = useState(null);
-    const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+    //  Filter & Pagination States
+    const [search, setSearch] = useState("");
+    const [sort, setSort] = useState("newest");
+    const [type, setType] = useState("");
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
 
+    const debouncedSearch = useDebounce(search, 500);
+
+    const toastTimerRef = useRef(null);
     const showToast = (message) => {
         setToast(message);
-        setTimeout(() => setToast(null), 3000);
+        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        toastTimerRef.current = setTimeout(() => setToast(null), 3000);
     };
 
+const fetchMedia = useCallback(async () => {
+        setLoading(true);
+        setError(null); 
+        
+        try {
+            const data = await getMedia({
+                search: debouncedSearch.trim(),
+                sort,
+                type,
+                page 
+            });
+            
+            // 💡 TEMPORARY DEBUG: Check the browser console to see the exact structure!
+            console.log("Backend API Response:", data);
+            
+            // 💡 THE FIX: Safely fallback to the raw array if data.media doesn't exist yet
+            setMediaList(data.media || (Array.isArray(data) ? data : []));
+            setTotalPages(data.totalPages || 1);
+
+        } catch (err) {
+            console.error("Failed to fetch media:", err);
+            setError("Unable to load your files. Please try again later.");
+        } finally {
+            setLoading(false);
+        }
+    }, [debouncedSearch, sort, type, page]);
+
     useEffect(() => {
-        const fetchMedia = async () => {
-            try {
-                const data = await getMedia();
-                setMediaList(Array.isArray(data) ? data : []);
-            } catch (err) {
-                console.error("Failed to fetch media:", err);
-                setError("Unable to load your files. Please try again later.");
-            } finally {
-                setLoading(false);
-            }
-        };
         fetchMedia();
-    }, []);
+        return () => {
+            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+        };
+    }, [fetchMedia]);
+
+
+    const handleSearchChange = (e) => {
+        setSearch(e.target.value);
+        setPage(1); 
+    };
+
+    const handleSortChange = (newSort) => {
+        setSort(newSort);
+        setPage(1);
+    };
+
+    const handleTypeChange = (newType) => {
+        setType(newType);
+        setPage(1);
+    };
+
 
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
 
-    // --- UPLOAD HANDLER ---
-    const handleUploadSuccess = (newMedia) => {
-        setMediaList(prev => [newMedia, ...prev]);
-        showToast("✅ Upload successful!");
+    const handleUploadSuccess = () => {
+        showToast("Upload successful!");
+        fetchMedia();
     };
 
-    // --- RENAME HANDLERS ---
     const handleRenameTrigger = (mediaItem) => {
         setActiveRenameItem(mediaItem);
         setIsRenameModalOpen(true);
@@ -64,41 +112,37 @@ const Dashboard = () => {
         setMediaList(prevList => 
             prevList.map(item => item._id === id ? { ...item, ...updatedItem } : item)
         );
-        showToast("✏️ File renamed successfully!");
+        showToast("File renamed successfully!");
     };
 
-    // --- DELETE HANDLER ---
     const handleDeleteTrigger = async (mediaItem) => {
-        // Native browser confirmation is the cleanest UX for destructive actions
         const confirmDelete = window.confirm(`Are you sure you want to delete "${mediaItem.fileName}"?`);
         if (!confirmDelete) return;
 
         try {
             await deleteMedia(mediaItem._id);
-            // Remove the item from local state immediately (No Refetch)
             setMediaList(prevList => prevList.filter(item => item._id !== mediaItem._id));
             showToast("🗑️ File deleted.");
+            
+           
+            if (mediaList.length === 1 && page > 1) {
+                setPage(page - 1);
+            }
         } catch (err) {
             alert(err.response?.data?.message || "Failed to delete file.");
         }
     };
 
-    // --- SHARE HANDLER ---
     const handleShareTrigger = (mediaItem) => {
         setActiveShareItem(mediaItem);
         setIsShareModalOpen(true);
     };
 
-    // --- DOWNLOAD HANDLER ---
     const handleDownloadTrigger = (mediaItem) => {
-        // Option 1: If your backend stores a direct file URL (like AWS S3)
         if (mediaItem.fileUrl) {
             window.open(mediaItem.fileUrl, '_blank');
             return;
         }
-        
-        // Option 2: If your backend streams the download via an endpoint
-        // NOTE: We append the auth token so the backend allows the download
         const token = localStorage.getItem('token');
         const downloadUrl = `http://localhost:5000/api/media/${mediaItem._id}/download?token=${token}`;
         window.open(downloadUrl, '_blank');
@@ -126,6 +170,22 @@ const Dashboard = () => {
             </header>
 
             <main className="dashboard-content" style={{ padding: '2rem' }}>
+                
+                
+                <div className="toolbar" style={{ display: 'flex', gap: '15px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                    <input 
+                        type="text" 
+                        placeholder="Search files..."
+                        value={search}
+                        onChange={handleSearchChange}
+                        className="search-input"
+                        style={{ flex: 1, minWidth: '200px', padding: '10px', borderRadius: '4px', border: '1px solid #555', backgroundColor: '#222', color: 'white' }}
+                    />
+                    
+                    <FilterDropdown value={type} onChange={handleTypeChange} />
+                    <SortDropdown value={sort} onChange={handleSortChange} />
+                </div>
+
                 <div className="content-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                     <h3>Your Files</h3>
                     <button 
@@ -138,42 +198,37 @@ const Dashboard = () => {
                 </div>
 
                 {loading && <div className="loading-spinner">Loading your files...</div>}
-                {error && <div className="error-banner" style={{ color: 'red' }}>{error}</div>}
+                {error && <div className="error-banner" style={{ color: '#dc3545', marginBottom: '20px' }}>{error}</div>}
                 
-                {!loading && !error && (
-                    <MediaGrid 
-                        media={mediaList} 
-                        onRenameTrigger={handleRenameTrigger}
-                        onDeleteTrigger={handleDeleteTrigger}
-                        onShareTrigger={handleShareTrigger}
-                        onDownloadTrigger={handleDownloadTrigger}
-                    />
+                {!loading && !error && mediaList.length === 0 && (
+                    <div style={{ textAlign: 'center', color: '#888', marginTop: '50px' }}>
+                        <p>No files found matching your criteria.</p>
+                    </div>
+                )}
+
+                {!loading && !error && mediaList.length > 0 && (
+                    <>
+                        <MediaGrid 
+                            media={mediaList} 
+                            onRenameTrigger={handleRenameTrigger}
+                            onDeleteTrigger={handleDeleteTrigger}
+                            onShareTrigger={handleShareTrigger}
+                            onDownloadTrigger={handleDownloadTrigger}
+                        />
+                        
+                       
+                        <Pagination 
+                            currentPage={page} 
+                            totalPages={totalPages} 
+                            onPageChange={setPage} 
+                        />
+                    </>
                 )}
                 
-                <UploadModal 
-                    isOpen={isUploadModalOpen} 
-                    onClose={() => setIsUploadModalOpen(false)} 
-                    onUploadSuccess={handleUploadSuccess} 
-                />
-
-                <RenameModal 
-                    isOpen={isRenameModalOpen}
-                    onClose={() => {
-                        setIsRenameModalOpen(false);
-                        setActiveRenameItem(null);
-                    }}
-                    mediaItem={activeRenameItem}
-                    onRenameSuccess={handleRenameSuccess}
-                />
-
-                <ShareModal 
-                isOpen={isShareModalOpen}
-                onClose={() => {
-                    setIsShareModalOpen(false);
-                    setActiveShareItem(null);
-                }}
-                mediaItem={activeShareItem}
-            />
+                {/* ... Modals ... */}
+                <UploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={handleUploadSuccess} />
+                <RenameModal isOpen={isRenameModalOpen} onClose={() => { setIsRenameModalOpen(false); setActiveRenameItem(null); }} mediaItem={activeRenameItem} onRenameSuccess={handleRenameSuccess} />
+                <ShareModal isOpen={isShareModalOpen} onClose={() => { setIsShareModalOpen(false); setActiveShareItem(null); }} mediaItem={activeShareItem} />
             </main>
         </div>
     );

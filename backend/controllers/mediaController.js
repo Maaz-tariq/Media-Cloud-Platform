@@ -15,13 +15,14 @@ const uploadMedia = async (req, res) => {
   }
 };
 
+
 const getUserMedia = async (req, res) => {
-  try {
-    const media = await mediaService.getUserMedia(req.user._id);
-    res.status(200).json(media);
-  } catch (error) {
-    res.status(error.status || 500).json({ message: error.message });
-  }
+    try {
+        const mediaData = await mediaService.getUserMedia(req.user._id, req.query);
+        res.status(200).json(mediaData);
+    } catch (error) {
+        res.status(error.status || 500).json({ message: error.message });
+    }
 };
 
 const deleteMedia = async (req, res) => {

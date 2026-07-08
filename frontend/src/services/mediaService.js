@@ -1,8 +1,8 @@
 import api from '../api/axios';
 
-// working fine
-export const getMedia = async (options = {}) => {
-    const response = await api.get('/media', { params: options });
+
+export const getMedia = async (params) => {
+    const response = await api.get('/media', { params }); 
     return response.data;
 };
 
