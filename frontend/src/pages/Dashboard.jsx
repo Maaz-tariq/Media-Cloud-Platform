@@ -149,59 +149,68 @@ const fetchMedia = useCallback(async () => {
         showToast("⬇️ Download started...");
     };
 
-    return (
-        <div className="min-h-screen bg-slate-50 text-gray-900 font-sans selection:bg-blue-200">
-            {toast && (
-                <div className="fixed top-6 right-6 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg z-50 font-bold animate-bounce">
-                    {toast}
-                </div>
-            )}
-
-            <header className="flex justify-between items-center px-8 py-5 bg-white  shadow-sm border-b border-gray-100">
-                <div className="flex items-center gap-3">
-                    <span className="text-black font-bold text-xl">Media Cloud</span>
-                </div>
-                <div className="flex items-center gap-6">
-                    <span className="text-gray-600 font-medium">Welcome, {user?.name}</span>
-                    <button onClick={handleLogout}  className="px-6 py-2.5 bg-gray-100 text-black-900 font-bold rounded-full hover:bg-gray-200 transition-colors" >
-                        Logout
-                    </button>
-                </div>
-            </header>
-
-            <main className="max-w-7xl mx-auto px-8 py-10">
-                
-            <div  className="flex flex-col md:flex-row gap-4 mb-10 items-center justify-between">
-                <div  className="flex flex-wrap gap-4 w-full md:w-auto flex-1">
-                    <input 
-                        type="text" 
-                        placeholder="Search files..."
-                        value={search}
-                        onChange={handleSearchChange}
-                        className="flex-1 md:min-w-[300px] px-6 py-3 rounded-full bg-white border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
-                    />
-                    
-                    <FilterDropdown value={type} onChange={handleTypeChange} />
-                    <SortDropdown value={sort} onChange={handleSortChange} />
-                </div>
+return (
+    /* 1. Viewport container blocks default browser scrollbars */
+    <div className="h-screen w-screen flex flex-col bg-slate-50 text-gray-900 font-sans selection:bg-blue-200 overflow-hidden">
+        {toast && (
+            <div className="fixed top-6 right-6 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg z-50 font-bold animate-bounce">
+                {toast}
             </div>
+        )}
 
-                <div className="content-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <h3>Your Files</h3>
+        {/* 2. Main Top Header (Fixed) */}
+        <header className="flex justify-between items-center px-8 py-5 bg-white shadow-sm border-b border-gray-100 flex-shrink-0 z-10">
+            <div className="flex items-center gap-3">
+                <span className="text-black font-bold text-xl">Media Cloud</span>
+            </div>
+            <div className="flex items-center gap-6">
+                <span className="text-gray-600 font-medium">Welcome, {user?.name}</span>
+                <button onClick={handleLogout} className="px-6 py-2.5 bg-gray-100 text-black-900 font-bold rounded-full hover:bg-gray-200 transition-colors">
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        {/* 3. NEW FIXED CONTROL WRAPPER: Stays frozen under the main header */}
+        <div className="w-full bg-slate-50 pt-10 pb-4 px-8 flex-shrink-0 border-b border-gray-100 shadow-sm">
+            <div className="max-w-7xl mx-auto">
+                {/* Search & Filters Row */}
+                <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
+                    <div className="flex flex-wrap gap-4 w-full md:w-auto flex-1">
+                        <input 
+                            type="text" 
+                            placeholder="Search files..."
+                            value={search}
+                            onChange={handleSearchChange}
+                            className="flex-1 md:min-w-[300px] px-6 py-3 rounded-full bg-white border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                        />
+                        <FilterDropdown value={type} onChange={handleTypeChange} />
+                        <SortDropdown value={sort} onChange={handleSortChange} />
+                    </div>
+                </div>
+
+                {/* Section Header Row */}
+                <div className="flex justify-between items-center">
+                    <h3 className="text-xl font-bold text-gray-900">Your Files</h3>
                     <button 
-                        
                         onClick={() => setIsUploadModalOpen(true)}
                         className="w-full md:w-auto px-8 py-3 bg-gray-900 text-white font-bold rounded-full shadow-md hover:bg-gray-800 transition-colors transform hover:-translate-y-0.5"
                     >
                         Upload File
                     </button>
                 </div>
+            </div>
+        </div>
 
+        {/* 4. EXCLUSIVE SCROLL ZONE: Only the media items list scrolls down */}
+        <main className="flex-1 overflow-y-auto px-8 py-6 w-full">
+            <div className="max-w-7xl mx-auto">
+                
                 {loading && <div className="flex justify-center items-center py-20">Loading your files...</div>}
                 {error && <div className="bg-red-50 text-red-600 p-6 rounded-3xl text-center font-bold border border-red-100 mb-8">{error}</div>}
                 
                 {!loading && !error && mediaList.length === 0 && (
-                    <div className="text-center bg-white p-20 rounded-3xl border border-gray-100 shadow-sm mt-10">
+                    <div className="text-center bg-white p-20 rounded-3xl border border-gray-100 shadow-sm mt-4">
                         <span className="text-6xl mb-4 block">👻</span>
                         <h3 className="text-2xl font-bold text-gray-900 mb-2">Nothing is here</h3>
                         <p className="text-gray-500 font-medium">No files found matching your criteria.</p>
@@ -209,7 +218,7 @@ const fetchMedia = useCallback(async () => {
                 )}
 
                 {!loading && !error && mediaList.length > 0 && (
-                    <>
+                    <div className="pb-12">
                         <MediaGrid 
                             media={mediaList} 
                             onRenameTrigger={handleRenameTrigger}
@@ -217,23 +226,23 @@ const fetchMedia = useCallback(async () => {
                             onShareTrigger={handleShareTrigger}
                             onDownloadTrigger={handleDownloadTrigger}
                         />
-                        
-                       
                         <Pagination 
                             currentPage={page} 
                             totalPages={totalPages} 
                             onPageChange={setPage} 
                         />
-                    </>
+                    </div>
                 )}
-                
-                {/* ... Modals ... */}
-                <UploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={handleUploadSuccess} />
-                <RenameModal isOpen={isRenameModalOpen} onClose={() => { setIsRenameModalOpen(false); setActiveRenameItem(null); }} mediaItem={activeRenameItem} onRenameSuccess={handleRenameSuccess} />
-                <ShareModal isOpen={isShareModalOpen} onClose={() => { setIsShareModalOpen(false); setActiveShareItem(null); }} mediaItem={activeShareItem} />
-            </main>
-        </div>
-    );
+            </div>
+        </main>
+        
+        {/* Modals Container */}
+        <UploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={handleUploadSuccess} />
+        <RenameModal isOpen={isRenameModalOpen} onClose={() => { setIsRenameModalOpen(false); setActiveRenameItem(null); }} mediaItem={activeRenameItem} onRenameSuccess={handleRenameSuccess} />
+        <ShareModal isOpen={isShareModalOpen} onClose={() => { setIsShareModalOpen(false); setActiveShareItem(null); }} mediaItem={activeShareItem} />
+    </div>
+);
+
 };
 
 export default Dashboard;

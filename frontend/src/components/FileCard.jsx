@@ -15,7 +15,7 @@ const FileCard = ({ media, onRenameTrigger, onDeleteTrigger, onShareTrigger, onD
     const handleDownload = () => onDownloadTrigger && onDownloadTrigger(media);
 
     return (
-        <div className="relative flex flex-col bg-white rounded-3xl p-5 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300">
+        <div className= "w-full relative flex flex-col bg-white rounded-3xl p-5 shadow-sm border border-gray-100 hover:shadow-xl transition-all duration-300">
             
             <div  className="absolute top-5 right-5 z-10">
                 <ActionMenu 

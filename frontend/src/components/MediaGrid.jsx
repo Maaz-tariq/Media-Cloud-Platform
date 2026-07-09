@@ -13,7 +13,7 @@ const MediaGrid = ({ media, onRenameTrigger, onDeleteTrigger, onShareTrigger, on
     }
 
     return (
-        <div  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 mt-8">
+        <div  className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                  {media.map((item) => (
                     <div key={item._id} className="transition-all duration-300 hover:scale-[1.02]" >
                         <FileCard 
