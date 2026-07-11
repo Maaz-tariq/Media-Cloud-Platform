@@ -41,7 +41,7 @@ const Login = () => {
     return (
         <div className="min-h-screen flex items-center justify-center bg-slate-50 p-4">
             <div className="bg-white p-10 rounded-3xl shadow-xl w-full max-w-sm border border-gray-100">
-                <h2 className="text-3xl font-extrabold mb-8 text-center text-gray-900">Welcome Back</h2>
+                <h2 className="text-3xl font-extrabold mb-8 text-center text-black ">Welcome Back</h2>
                  {error && (
                 <div className="error-message">
                     {error}

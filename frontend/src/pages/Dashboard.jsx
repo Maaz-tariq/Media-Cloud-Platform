@@ -12,6 +12,9 @@ import Pagination from '../components/Pagination';
 import { useDebounce } from '../hooks/useDebounce';
 
 const Dashboard = () => {
+    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+
     const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate(); 
 
@@ -150,97 +153,167 @@ const fetchMedia = useCallback(async () => {
     };
 
 return (
-    /* 1. Viewport container blocks default browser scrollbars */
-    <div className="h-screen w-screen flex flex-col bg-slate-50 text-gray-900 font-sans selection:bg-blue-200 overflow-hidden">
-        {toast && (
-            <div className="fixed top-6 right-6 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg z-50 font-bold animate-bounce">
-                {toast}
-            </div>
-        )}
+     <div className="h-screen w-full flex bg-slate-50 text-gray-900 font-sans selection:bg-blue-200 overflow-hidden relative">
+            {toast && (
+                <div className="fixed top-6 right-6 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg z-50 font-bold animate-bounce text-sm">
+                    {toast}
+                </div>
+            )}
 
-        {/* 2. Main Top Header (Fixed) */}
-        <header className="flex justify-between items-center px-8 py-5 bg-white shadow-sm border-b border-gray-100 flex-shrink-0 z-10">
-            <div className="flex items-center gap-3">
-                <span className="text-black font-bold text-xl">Media Cloud</span>
-            </div>
-            <div className="flex items-center gap-6">
-                <span className="text-gray-600 font-medium">Welcome, {user?.name}</span>
-                <button onClick={handleLogout} className="px-6 py-2.5 bg-gray-100 text-black-900 font-bold rounded-full hover:bg-gray-200 transition-colors">
-                    Logout
-                </button>
-            </div>
-        </header>
+            {/* MOBILE ONLY OVERLAY */}
+            {isSidebarOpen && (
+                <div 
+                    className="fixed inset-0 bg-black/40 z-30 md:hidden transition-opacity duration-300"
+                    onClick={() => setIsSidebarOpen(false)}
+                />
+            )}
 
-        {/* 3. NEW FIXED CONTROL WRAPPER: Stays frozen under the main header */}
-        <div className="w-full bg-slate-50 pt-10 pb-4 px-8 flex-shrink-0 border-b border-gray-100 shadow-sm">
-            <div className="max-w-7xl mx-auto">
-                {/* Search & Filters Row */}
-                <div className="flex flex-col md:flex-row gap-4 mb-6 items-center justify-between">
-                    <div className="flex flex-wrap gap-4 w-full md:w-auto flex-1">
+            {/* DYNAMIC SIDEBAR */}
+            <aside className={`
+                fixed inset-y-0 left-0 z-40 w-64 bg-white border-r border-gray-100 flex flex-col justify-between flex-shrink-0 shadow-sm transition-all duration-300 ease-in-out
+                md:relative md:transform-none
+                ${isSidebarOpen ? 'translate-x-0 md:w-64 md:opacity-100' : '-translate-x-full md:w-0 md:opacity-0 md:pointer-events-none md:border-r-0'}
+            `}>
+                <div>
+                    {/* Branding Area: Clicking this closes the sidebar */}
+                    <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
+                        <span 
+                            onClick={() => setIsSidebarOpen(false)} 
+                            className="text-black font-extrabold text-xl tracking-tight cursor-pointer hover:opacity-70 transition-opacity"
+                        >
+                            Media Cloud
+                        </span>
+                        <button 
+                            onClick={() => setIsSidebarOpen(false)}
+                            className="md:hidden p-1 text-gray-500 hover:bg-gray-100 rounded-lg"
+                        >
+                            ✕
+                        </button>
+                    </div>
+
+                    {/* Sidebar Actions & Navigation */}
+                    <div className="p-4 flex flex-col gap-6">
+                        <button 
+                            onClick={() => {
+                                setIsUploadModalOpen(true);
+                                if (window.innerWidth < 768) setIsSidebarOpen(false);
+                            }}
+                            className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white font-bold rounded-xl shadow-md hover:bg-gray-800 transition-colors transform hover:-translate-y-0.5"
+                        >
+                        
+                            <span className="text-lg">+</span> Upload File
+                        </button>
+
+                        <nav className="flex flex-col gap-1">
+                            <button className="flex items-center gap-3 px-4 py-2.5 bg-blue-50 text-blue-600 font-bold rounded-xl text-left text-sm w-full">
+                                <span>📂</span> All Files
+                            </button>
+                        </nav>
+                    </div>
+                </div>
+
+                {/* User Info / Logout */}
+                <div className="p-4 border-t border-gray-50 bg-gray-50/50 flex flex-col gap-2">
+                    <div className="px-2">
+                        <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Logged in as</p>
+                        <p className="text-sm text-gray-700 font-bold truncate">{user?.name}</p>
+                    </div>
+                    <button 
+                        onClick={handleLogout} 
+                        className="w-full text-center px-4 py-2 bg-red-800 border border-gray-200 text-white text-xs font-bold rounded-lg hover:bg-red-800 transition-all shadow-smtransform hover:-translate-y-0.5"
+                    >
+                        Logout
+                    </button>
+                </div>
+            </aside>
+
+            {/* RIGHT VIEWPANE */}
+            <div className="flex-1 h-full flex flex-col overflow-hidden w-full transition-all duration-300">
+                
+                {/* Header Control Bar */}
+                <header className="w-full bg-white min-h-[4rem] md:h-16 px-4 md:px-8 border-b border-gray-100 flex flex-col md:flex-row items-center justify-between py-3 md:py-0 gap-3 flex-shrink-0 shadow-sm">
+                    
+                    <div className="flex items-center gap-4 w-full md:flex-1 md:max-w-2xl">
+                        {/* Hamburger Button / Conditional Logo Block */}
+                        <div className="flex items-center gap-3">
+                            <button 
+                                onClick={() => setIsSidebarOpen(true)}
+                                className="p-2 text-gray-700 hover:bg-gray-100 rounded-xl flex-shrink-0"
+                            >
+                                ☰
+                            </button>
+
+                            {/* 💡 Logo only appears here when the main sidebar is closed */}
+                            {!isSidebarOpen && (
+                                <span 
+                                    onClick={() => setIsSidebarOpen(true)}
+                                    className="hidden md:block text-black font-extrabold text-xl tracking-tight cursor-pointer hover:opacity-70 transition-opacity mr-2 whitespace-nowrap animate-fade-in"
+                                >
+                                    Media Cloud
+                                </span>
+                            )}
+                        </div>
+
                         <input 
                             type="text" 
                             placeholder="Search files..."
                             value={search}
                             onChange={handleSearchChange}
-                            className="flex-1 md:min-w-[300px] px-6 py-3 rounded-full bg-white border border-gray-200 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium"
+                            className="w-full px-5 py-2 rounded-full bg-slate-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm shadow-inner"
                         />
+                    </div>
+                    
+                    {/* Filters dropdown row */}
+                    <div className="flex items-center gap-3 text-sm w-full md:w-auto justify-end">
                         <FilterDropdown value={type} onChange={handleTypeChange} />
                         <SortDropdown value={sort} onChange={handleSortChange} />
                     </div>
-                </div>
+                </header>
 
-                {/* Section Header Row */}
-                <div className="flex justify-between items-center">
-                    <h3 className="text-xl font-bold text-gray-900">Your Files</h3>
-                    <button 
-                        onClick={() => setIsUploadModalOpen(true)}
-                        className="w-full md:w-auto px-8 py-3 bg-gray-900 text-white font-bold rounded-full shadow-md hover:bg-gray-800 transition-colors transform hover:-translate-y-0.5"
-                    >
-                        Upload File
-                    </button>
-                </div>
+                {/* Content Scroll Grid */}
+                <main className="flex-1 overflow-y-auto px-4 md:px-8 py-6 w-full">
+                    <div className="w-full">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-extrabold text-gray-900 tracking-tight">Your Files</h3>
+                        </div>
+                        
+                        {loading && <div className="flex justify-center items-center py-20 text-gray-500 font-medium">Loading your files...</div>}
+                        {error && <div className="bg-red-50 text-red-600 p-6 rounded-2xl text-center font-bold border border-red-100 mb-8">{error}</div>}
+                        
+                        {!loading && !error && mediaList.length === 0 && (
+                            <div className="text-center bg-white p-20 rounded-2xl border border-gray-100 shadow-sm mt-4">
+                                <span className="text-6xl mb-4 block">👻</span>
+                                <h3 className="text-xl font-bold text-gray-900 mb-1">Nothing is here</h3>
+                                <p className="text-gray-500 text-sm font-medium">No files found matching your criteria.</p>
+                            </div>
+                        )}
+
+                        {!loading && !error && mediaList.length > 0 && (
+                            <div className="pb-12">
+                                <MediaGrid 
+                                    media={mediaList} 
+                                    onRenameTrigger={handleRenameTrigger}
+                                    onDeleteTrigger={handleDeleteTrigger}
+                                    onShareTrigger={handleShareTrigger}
+                                    onDownloadTrigger={handleDownloadTrigger}
+                                />
+                                <Pagination 
+                                    currentPage={page} 
+                                    totalPages={totalPages} 
+                                    onPageChange={setPage} 
+                                />
+                            </div>
+                        )}
+                    </div>
+                </main>
             </div>
+
+            {/* Modals Container */}
+            <UploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={handleUploadSuccess} />
+            <RenameModal isOpen={isRenameModalOpen} onClose={() => { setIsRenameModalOpen(false); setActiveRenameItem(null); }} mediaItem={activeRenameItem} onRenameSuccess={handleRenameSuccess} />
+            <ShareModal isOpen={isShareModalOpen} onClose={() => { setIsShareModalOpen(false); setActiveShareItem(null); }} mediaItem={activeShareItem} />
         </div>
 
-        {/* 4. EXCLUSIVE SCROLL ZONE: Only the media items list scrolls down */}
-        <main className="flex-1 overflow-y-auto px-8 py-6 w-full">
-            <div className="max-w-7xl mx-auto">
-                
-                {loading && <div className="flex justify-center items-center py-20">Loading your files...</div>}
-                {error && <div className="bg-red-50 text-red-600 p-6 rounded-3xl text-center font-bold border border-red-100 mb-8">{error}</div>}
-                
-                {!loading && !error && mediaList.length === 0 && (
-                    <div className="text-center bg-white p-20 rounded-3xl border border-gray-100 shadow-sm mt-4">
-                        <span className="text-6xl mb-4 block">👻</span>
-                        <h3 className="text-2xl font-bold text-gray-900 mb-2">Nothing is here</h3>
-                        <p className="text-gray-500 font-medium">No files found matching your criteria.</p>
-                    </div>
-                )}
-
-                {!loading && !error && mediaList.length > 0 && (
-                    <div className="pb-12">
-                        <MediaGrid 
-                            media={mediaList} 
-                            onRenameTrigger={handleRenameTrigger}
-                            onDeleteTrigger={handleDeleteTrigger}
-                            onShareTrigger={handleShareTrigger}
-                            onDownloadTrigger={handleDownloadTrigger}
-                        />
-                        <Pagination 
-                            currentPage={page} 
-                            totalPages={totalPages} 
-                            onPageChange={setPage} 
-                        />
-                    </div>
-                )}
-            </div>
-        </main>
-        
-        {/* Modals Container */}
-        <UploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={handleUploadSuccess} />
-        <RenameModal isOpen={isRenameModalOpen} onClose={() => { setIsRenameModalOpen(false); setActiveRenameItem(null); }} mediaItem={activeRenameItem} onRenameSuccess={handleRenameSuccess} />
-        <ShareModal isOpen={isShareModalOpen} onClose={() => { setIsShareModalOpen(false); setActiveShareItem(null); }} mediaItem={activeShareItem} />
-    </div>
 );
 
 };
