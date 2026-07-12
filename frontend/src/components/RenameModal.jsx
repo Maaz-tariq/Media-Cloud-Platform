@@ -3,7 +3,31 @@ import React, { useState, useEffect } from 'react';
 // MOCK SERVICE FOR CANVAS PREVIEW
 // In your real project, delete this mock and use: 
 // import { updateMediaName } from '../services/mediaService';
-const updateMediaName = async (id, name) => new Promise(resolve => setTimeout(() => resolve({ fileName: name }), 1000));
+// Using standard browser fetch (Replace with your actual backend base URL if needed)
+const updateMediaName = async (id, name) => {
+    const token = localStorage.getItem("token"); 
+    
+    // 1. Change the port to your EXPRESS server port (e.g., 5000) if not using a proxy
+    const response = await fetch(`http://localhost:5000/api/media/${id}/rename`, {
+        method: 'PATCH', 
+        headers: {
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+        },
+        // 2. Change the key from 'fileName' to 'name' to match req.body.name
+        body: JSON.stringify({ name: name }) 
+    });
+
+    if (!response.ok) {
+        throw new Error('Server rejected rename operation');
+    }
+
+    const data = await response.json();
+    // 3. Return the nested media object from your backend response structure
+    return data.media; 
+};
+
+
 
 const RenameModal = ({ isOpen, onClose, mediaItem, onRenameSuccess }) => {
     const [newName, setNewName] = useState('');

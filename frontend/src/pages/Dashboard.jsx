@@ -85,10 +85,17 @@ const fetchMedia = useCallback(async () => {
         setPage(1); 
     };
 
-    const handleSortChange = (newSort) => {
-        setSort(newSort);
-        setPage(1);
-    };
+    // const handleSortChange = (newSort) => {
+    //     setSort(newSort);
+    //     setPage(1);
+    // };
+
+    const handleSortChange = (newSortValue) => {
+    const finalSort = newSortValue?.target ? newSortValue.target.value : newSortValue;
+    
+    setSort(finalSort);
+    setPage(1);
+};
 
     const handleTypeChange = (newType) => {
         setType(newType);

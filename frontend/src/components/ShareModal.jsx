@@ -1,9 +1,6 @@
 import React, { useState } from 'react';
-
-// MOCK SERVICE FOR CANVAS PREVIEW
-// In your real project, delete this mock and use: 
-// import { createShareLink } from '../services/mediaService';
-const createShareLink = async (id) => new Promise(resolve => setTimeout(() => resolve({ shareToken: 'mock-token-123' }), 1000));
+// 1. Import your actual service
+import { createShareLink } from '../services/mediaService'; 
 
 const ShareModal = ({ isOpen, onClose, mediaItem }) => {
     const [shareLink, setShareLink] = useState('');
@@ -13,22 +10,34 @@ const ShareModal = ({ isOpen, onClose, mediaItem }) => {
 
     if (!isOpen || !mediaItem) return null;
 
-    const handleGenerateLink = async () => {
+const handleGenerateLink = async () => {
         try {
             setLoading(true);
             setError(null);
+            
             const data = await createShareLink(mediaItem._id);
-            // Assuming the backend returns { shareToken: 'xyz...' }
-            const link = `${window.location.origin}/share/${data.shareToken}`;
+            
+            // 💡 FIX: Use shareUrl provided by your backend
+            if (!data.shareUrl) {
+                throw new Error("No URL returned from server");
+            }
+
+            // Extract the token from the backend URL
+            // The URL looks like: http://localhost:5000/api/public/shares/df03c7828440...
+            const token = data.shareUrl.split('/shares/')[1];
+            
+            // Construct the frontend link
+            const link = `${window.location.origin}/share/${token}`;
+            
             setShareLink(link);
             setCopied(false);
         } catch (err) {
+            console.error("Full Share Error:", err);
             setError(err.response?.data?.message || "Failed to generate link.");
         } finally {
             setLoading(false);
         }
     };
-
     const handleCopy = () => {
         navigator.clipboard.writeText(shareLink);
         setCopied(true);
