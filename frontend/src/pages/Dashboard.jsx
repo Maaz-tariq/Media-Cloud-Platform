@@ -1,4 +1,4 @@
-import { useEffect, useState, useContext, useCallback, useRef } from 'react';
+import React, { useEffect, useState, useContext, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import { getMedia, deleteMedia } from '../services/mediaService';
@@ -10,13 +10,14 @@ import SortDropdown from '../components/SortDropdown';
 import FilterDropdown from '../components/FilterDropdown'; 
 import Pagination from '../components/Pagination'; 
 import { useDebounce } from '../hooks/useDebounce';
+import { SkeletonGrid } from '../components/SkeletonGrid'; // 
 
 const Dashboard = () => {
-    const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-
-
     const { user, logout } = useContext(AuthContext);
     const navigate = useNavigate(); 
+    
+    // Sidebar State
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     const [mediaList, setMediaList] = useState([]);
     const [activeRenameItem, setActiveRenameItem] = useState(null);
@@ -29,7 +30,6 @@ const Dashboard = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    //  Filter & Pagination States
     const [search, setSearch] = useState("");
     const [sort, setSort] = useState("newest");
     const [type, setType] = useState("");
@@ -45,7 +45,7 @@ const Dashboard = () => {
         toastTimerRef.current = setTimeout(() => setToast(null), 3000);
     };
 
-const fetchMedia = useCallback(async () => {
+    const fetchMedia = useCallback(async () => {
         setLoading(true);
         setError(null); 
         
@@ -57,13 +57,8 @@ const fetchMedia = useCallback(async () => {
                 page 
             });
             
-            // 💡 TEMPORARY DEBUG: Check the browser console to see the exact structure!
-            console.log("Backend API Response:", data);
-            
-            // 💡 THE FIX: Safely fallback to the raw array if data.media doesn't exist yet
             setMediaList(data.media || (Array.isArray(data) ? data : []));
             setTotalPages(data.totalPages || 1);
-
         } catch (err) {
             console.error("Failed to fetch media:", err);
             setError("Unable to load your files. Please try again later.");
@@ -79,38 +74,32 @@ const fetchMedia = useCallback(async () => {
         };
     }, [fetchMedia]);
 
-
     const handleSearchChange = (e) => {
         setSearch(e.target.value);
         setPage(1); 
     };
 
-    // const handleSortChange = (newSort) => {
-    //     setSort(newSort);
-    //     setPage(1);
-    // };
-
-    const handleSortChange = (newSortValue) => {
-    const finalSort = newSortValue?.target ? newSortValue.target.value : newSortValue;
-    
-    setSort(finalSort);
-    setPage(1);
-};
+    const handleSortChange = (newSort) => {
+        setSort(newSort);
+        setPage(1);
+    };
 
     const handleTypeChange = (newType) => {
         setType(newType);
         setPage(1);
     };
 
-
     const handleLogout = () => {
         logout();
         navigate('/login');
     };
 
-    const handleUploadSuccess = () => {
-        showToast("Upload successful!");
-        fetchMedia();
+    const handleUploadSuccess = async () => {
+        showToast("🎉 Upload successful!");
+        setTimeout(() => {
+            setPage(1);
+            fetchMedia();
+        }, 1000); 
     };
 
     const handleRenameTrigger = (mediaItem) => {
@@ -122,7 +111,7 @@ const fetchMedia = useCallback(async () => {
         setMediaList(prevList => 
             prevList.map(item => item._id === id ? { ...item, ...updatedItem } : item)
         );
-        showToast("File renamed successfully!");
+        showToast("✏️ File renamed successfully!");
     };
 
     const handleDeleteTrigger = async (mediaItem) => {
@@ -130,15 +119,17 @@ const fetchMedia = useCallback(async () => {
         if (!confirmDelete) return;
 
         try {
-            await deleteMedia(mediaItem._id);
             setMediaList(prevList => prevList.filter(item => item._id !== mediaItem._id));
+            await deleteMedia(mediaItem._id);
             showToast("🗑️ File deleted.");
             
-           
             if (mediaList.length === 1 && page > 1) {
                 setPage(page - 1);
+            } else {
+                fetchMedia();
             }
         } catch (err) {
+            fetchMedia();
             alert(err.response?.data?.message || "Failed to delete file.");
         }
     };
@@ -159,8 +150,8 @@ const fetchMedia = useCallback(async () => {
         showToast("⬇️ Download started...");
     };
 
-return (
-     <div className="h-screen w-full flex bg-slate-50 text-gray-900 font-sans selection:bg-blue-200 overflow-hidden relative">
+    return (
+        <div className="h-screen w-full flex bg-slate-50 text-gray-900 font-sans selection:bg-blue-200 overflow-hidden relative">
             {toast && (
                 <div className="fixed top-6 right-6 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg z-50 font-bold animate-bounce text-sm">
                     {toast}
@@ -182,7 +173,6 @@ return (
                 ${isSidebarOpen ? 'translate-x-0 md:w-64 md:opacity-100' : '-translate-x-full md:w-0 md:opacity-0 md:pointer-events-none md:border-r-0'}
             `}>
                 <div>
-                    {/* Branding Area: Clicking this closes the sidebar */}
                     <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
                         <span 
                             onClick={() => setIsSidebarOpen(false)} 
@@ -198,7 +188,6 @@ return (
                         </button>
                     </div>
 
-                    {/* Sidebar Actions & Navigation */}
                     <div className="p-4 flex flex-col gap-6">
                         <button 
                             onClick={() => {
@@ -207,7 +196,6 @@ return (
                             }}
                             className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white font-bold rounded-xl shadow-md hover:bg-gray-800 transition-colors transform hover:-translate-y-0.5"
                         >
-                        
                             <span className="text-lg">+</span> Upload File
                         </button>
 
@@ -219,7 +207,6 @@ return (
                     </div>
                 </div>
 
-                {/* User Info / Logout */}
                 <div className="p-4 border-t border-gray-50 bg-gray-50/50 flex flex-col gap-2">
                     <div className="px-2">
                         <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Logged in as</p>
@@ -227,7 +214,7 @@ return (
                     </div>
                     <button 
                         onClick={handleLogout} 
-                        className="w-full text-center px-4 py-2 bg-red-800 border border-gray-200 text-white text-xs font-bold rounded-lg hover:bg-red-800 transition-all shadow-smtransform hover:-translate-y-0.5"
+                        className="w-full text-center px-4 py-2 bg-red-800 border border-gray-200 text-white text-xs font-bold rounded-lg hover:bg-red-800 transition-all shadow-sm transform hover:-translate-y-0.5"
                     >
                         Logout
                     </button>
@@ -236,12 +223,8 @@ return (
 
             {/* RIGHT VIEWPANE */}
             <div className="flex-1 h-full flex flex-col overflow-hidden w-full transition-all duration-300">
-                
-                {/* Header Control Bar */}
                 <header className="w-full bg-white min-h-[4rem] md:h-16 px-4 md:px-8 border-b border-gray-100 flex flex-col md:flex-row items-center justify-between py-3 md:py-0 gap-3 flex-shrink-0 shadow-sm">
-                    
                     <div className="flex items-center gap-4 w-full md:flex-1 md:max-w-2xl">
-                        {/* Hamburger Button / Conditional Logo Block */}
                         <div className="flex items-center gap-3">
                             <button 
                                 onClick={() => setIsSidebarOpen(true)}
@@ -249,13 +232,8 @@ return (
                             >
                                 ☰
                             </button>
-
-                            {/* 💡 Logo only appears here when the main sidebar is closed */}
                             {!isSidebarOpen && (
-                                <span 
-                                    onClick={() => setIsSidebarOpen(true)}
-                                    className="hidden md:block text-black font-extrabold text-xl tracking-tight cursor-pointer hover:opacity-70 transition-opacity mr-2 whitespace-nowrap animate-fade-in"
-                                >
+                                <span className="hidden md:block text-black font-extrabold text-xl tracking-tight mr-2 whitespace-nowrap animate-fade-in">
                                     Media Cloud
                                 </span>
                             )}
@@ -270,21 +248,21 @@ return (
                         />
                     </div>
                     
-                    {/* Filters dropdown row */}
                     <div className="flex items-center gap-3 text-sm w-full md:w-auto justify-end">
                         <FilterDropdown value={type} onChange={handleTypeChange} />
                         <SortDropdown value={sort} onChange={handleSortChange} />
                     </div>
                 </header>
 
-                {/* Content Scroll Grid */}
                 <main className="flex-1 overflow-y-auto px-4 md:px-8 py-6 w-full">
                     <div className="w-full">
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-extrabold text-gray-900 tracking-tight">Your Files</h3>
                         </div>
                         
-                        {loading && <div className="flex justify-center items-center py-20 text-gray-500 font-medium">Loading your files...</div>}
+                        {/* 💡 SKELETON LOADER APPLIED HERE */}
+                        {loading && <SkeletonGrid count={8} />}
+                        
                         {error && <div className="bg-red-50 text-red-600 p-6 rounded-2xl text-center font-bold border border-red-100 mb-8">{error}</div>}
                         
                         {!loading && !error && mediaList.length === 0 && (
@@ -315,14 +293,11 @@ return (
                 </main>
             </div>
 
-            {/* Modals Container */}
             <UploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={handleUploadSuccess} />
             <RenameModal isOpen={isRenameModalOpen} onClose={() => { setIsRenameModalOpen(false); setActiveRenameItem(null); }} mediaItem={activeRenameItem} onRenameSuccess={handleRenameSuccess} />
             <ShareModal isOpen={isShareModalOpen} onClose={() => { setIsShareModalOpen(false); setActiveShareItem(null); }} mediaItem={activeShareItem} />
         </div>
-
-);
-
+    );
 };
 
 export default Dashboard;

@@ -4,9 +4,11 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard'; 
 import ProtectedRoute from './components/ProtectedRoute';
 import ShareView from './pages/ShareView';
+import ErrorPage from './components/ErrorPage';
 
 function App() {
   return (
+    <ErrorPage>
     <Router>
       <Routes>
         <Route path="/" element={<Navigate to="/login" replace />} />
@@ -27,6 +29,8 @@ function App() {
         <Route path="/share/:token" element={<ShareView />} />
       </Routes>
     </Router>
+   </ErrorPage>
+
   );
 }
 

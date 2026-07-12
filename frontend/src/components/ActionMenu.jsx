@@ -47,7 +47,7 @@ const ActionMenu = ({ onRename, onDelete, onShare, onDownload }) => {
                         Rename
                     </button>
                     <button onClick={() => handleAction(onDownload)} className="px-3 py-1 hover:bg-gray-50 text-left">
-                        Download
+                        Open
                     </button>
                     <button onClick={() => handleAction(onShare)} className="px-3 py-1 hover:bg-gray-50 text-left">
                         Share
