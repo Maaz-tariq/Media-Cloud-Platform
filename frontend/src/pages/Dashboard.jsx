@@ -1,82 +1,50 @@
-import React, { useEffect, useState, useContext, useCallback, useRef } from 'react';
+import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
-import { getMedia, deleteMedia } from '../services/mediaService';
 import MediaGrid from '../components/MediaGrid';
 import UploadModal from '../components/UploadModal';
 import RenameModal from '../components/RenameModal';
 import ShareModal from '../components/ShareModal';
 import SortDropdown from '../components/SortDropdown';
-import FilterDropdown from '../components/FilterDropdown'; 
-import Pagination from '../components/Pagination'; 
-import { useDebounce } from '../hooks/useDebounce';
-import { SkeletonGrid } from '../components/SkeletonGrid'; // 
+import FilterDropdown from '../components/FilterDropdown';
+import Pagination from '../components/Pagination';
+import { SkeletonGrid } from '../components/SkeletonGrid';
+import { useMedia } from '../hooks/useMedia';
+import DeleteConfirmModal from '../components/DeleteConfirmModal';
 
 const Dashboard = () => {
     const { user, logout } = useContext(AuthContext);
-    const navigate = useNavigate(); 
-    
+    const navigate = useNavigate();
+
     // Sidebar State
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-    const [mediaList, setMediaList] = useState([]);
     const [activeRenameItem, setActiveRenameItem] = useState(null);
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
     const [isRenameModalOpen, setIsRenameModalOpen] = useState(false);
     const [activeShareItem, setActiveShareItem] = useState(null);
     const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-    
-    const [toast, setToast] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
 
-    const [search, setSearch] = useState("");
-    const [sort, setSort] = useState("newest");
-    const [type, setType] = useState("");
-    const [page, setPage] = useState(1);
-    const [totalPages, setTotalPages] = useState(1);
-
-    const debouncedSearch = useDebounce(search, 500);
-
-    const toastTimerRef = useRef(null);
-    const showToast = (message) => {
-        setToast(message);
-        if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-        toastTimerRef.current = setTimeout(() => setToast(null), 3000);
-    };
-
-    const fetchMedia = useCallback(async () => {
-        setLoading(true);
-        setError(null); 
-        
-        try {
-            const data = await getMedia({
-                search: debouncedSearch.trim(),
-                sort,
-                type,
-                page 
-            });
-            
-            setMediaList(data.media || (Array.isArray(data) ? data : []));
-            setTotalPages(data.totalPages || 1);
-        } catch (err) {
-            console.error("Failed to fetch media:", err);
-            setError("Unable to load your files. Please try again later.");
-        } finally {
-            setLoading(false);
-        }
-    }, [debouncedSearch, sort, type, page]);
-
-    useEffect(() => {
-        fetchMedia();
-        return () => {
-            if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
-        };
-    }, [fetchMedia]);
+    const {
+    mediaList,
+    loading, error, toast,
+    search, setSearch,
+    sort, setSort,
+    type, setType,
+    page, setPage,
+    totalPages,
+    handleDeleteTrigger,
+    confirmDelete,
+    cancelDelete,
+    isDeleteModalOpen,
+    deleteTarget,
+    handleUploadSuccess,
+    handleRenameSuccess,
+} = useMedia();
 
     const handleSearchChange = (e) => {
         setSearch(e.target.value);
-        setPage(1); 
+        setPage(1);
     };
 
     const handleSortChange = (newSort) => {
@@ -94,44 +62,9 @@ const Dashboard = () => {
         navigate('/login');
     };
 
-    const handleUploadSuccess = async () => {
-        showToast("🎉 Upload successful!");
-        setTimeout(() => {
-            setPage(1);
-            fetchMedia();
-        }, 1000); 
-    };
-
     const handleRenameTrigger = (mediaItem) => {
         setActiveRenameItem(mediaItem);
         setIsRenameModalOpen(true);
-    };
-
-    const handleRenameSuccess = (id, updatedItem) => {
-        setMediaList(prevList => 
-            prevList.map(item => item._id === id ? { ...item, ...updatedItem } : item)
-        );
-        showToast("✏️ File renamed successfully!");
-    };
-
-    const handleDeleteTrigger = async (mediaItem) => {
-        const confirmDelete = window.confirm(`Are you sure you want to delete "${mediaItem.fileName}"?`);
-        if (!confirmDelete) return;
-
-        try {
-            setMediaList(prevList => prevList.filter(item => item._id !== mediaItem._id));
-            await deleteMedia(mediaItem._id);
-            showToast("🗑️ File deleted.");
-            
-            if (mediaList.length === 1 && page > 1) {
-                setPage(page - 1);
-            } else {
-                fetchMedia();
-            }
-        } catch (err) {
-            fetchMedia();
-            alert(err.response?.data?.message || "Failed to delete file.");
-        }
     };
 
     const handleShareTrigger = (mediaItem) => {
@@ -160,7 +93,7 @@ const Dashboard = () => {
 
             {/* MOBILE ONLY OVERLAY */}
             {isSidebarOpen && (
-                <div 
+                <div
                     className="fixed inset-0 bg-black/40 z-30 md:hidden transition-opacity duration-300"
                     onClick={() => setIsSidebarOpen(false)}
                 />
@@ -174,13 +107,13 @@ const Dashboard = () => {
             `}>
                 <div>
                     <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
-                        <span 
-                            onClick={() => setIsSidebarOpen(false)} 
+                        <span
+                            onClick={() => setIsSidebarOpen(false)}
                             className="text-black font-extrabold text-xl tracking-tight cursor-pointer hover:opacity-70 transition-opacity"
                         >
                             Media Cloud
                         </span>
-                        <button 
+                        <button
                             onClick={() => setIsSidebarOpen(false)}
                             className="md:hidden p-1 text-gray-500 hover:bg-gray-100 rounded-lg"
                         >
@@ -189,7 +122,7 @@ const Dashboard = () => {
                     </div>
 
                     <div className="p-4 flex flex-col gap-6">
-                        <button 
+                        <button
                             onClick={() => {
                                 setIsUploadModalOpen(true);
                                 if (window.innerWidth < 768) setIsSidebarOpen(false);
@@ -212,8 +145,8 @@ const Dashboard = () => {
                         <p className="text-xs text-gray-400 font-semibold uppercase tracking-wider">Logged in as</p>
                         <p className="text-sm text-gray-700 font-bold truncate">{user?.name}</p>
                     </div>
-                    <button 
-                        onClick={handleLogout} 
+                    <button
+                        onClick={handleLogout}
                         className="w-full text-center px-4 py-2 bg-red-800 border border-gray-200 text-white text-xs font-bold rounded-lg hover:bg-red-800 transition-all shadow-sm transform hover:-translate-y-0.5"
                     >
                         Logout
@@ -226,7 +159,7 @@ const Dashboard = () => {
                 <header className="w-full bg-white min-h-[4rem] md:h-16 px-4 md:px-8 border-b border-gray-100 flex flex-col md:flex-row items-center justify-between py-3 md:py-0 gap-3 flex-shrink-0 shadow-sm">
                     <div className="flex items-center gap-4 w-full md:flex-1 md:max-w-2xl">
                         <div className="flex items-center gap-3">
-                            <button 
+                            <button
                                 onClick={() => setIsSidebarOpen(true)}
                                 className="p-2 text-gray-700 hover:bg-gray-100 rounded-xl flex-shrink-0"
                             >
@@ -239,15 +172,15 @@ const Dashboard = () => {
                             )}
                         </div>
 
-                        <input 
-                            type="text" 
+                        <input
+                            type="text"
                             placeholder="Search files..."
                             value={search}
                             onChange={handleSearchChange}
                             className="w-full px-5 py-2 rounded-full bg-slate-50 border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 font-medium text-sm shadow-inner"
                         />
                     </div>
-                    
+
                     <div className="flex items-center gap-3 text-sm w-full md:w-auto justify-end">
                         <FilterDropdown value={type} onChange={handleTypeChange} />
                         <SortDropdown value={sort} onChange={handleSortChange} />
@@ -259,12 +192,11 @@ const Dashboard = () => {
                         <div className="flex items-center justify-between mb-4">
                             <h3 className="text-lg font-extrabold text-gray-900 tracking-tight">Your Files</h3>
                         </div>
-                        
-                        {/* 💡 SKELETON LOADER APPLIED HERE */}
+
                         {loading && <SkeletonGrid count={8} />}
-                        
+
                         {error && <div className="bg-red-50 text-red-600 p-6 rounded-2xl text-center font-bold border border-red-100 mb-8">{error}</div>}
-                        
+
                         {!loading && !error && mediaList.length === 0 && (
                             <div className="text-center bg-white p-20 rounded-2xl border border-gray-100 shadow-sm mt-4">
                                 <span className="text-6xl mb-4 block">👻</span>
@@ -275,17 +207,17 @@ const Dashboard = () => {
 
                         {!loading && !error && mediaList.length > 0 && (
                             <div className="pb-12">
-                                <MediaGrid 
-                                    media={mediaList} 
+                                <MediaGrid
+                                    media={mediaList}
                                     onRenameTrigger={handleRenameTrigger}
                                     onDeleteTrigger={handleDeleteTrigger}
                                     onShareTrigger={handleShareTrigger}
                                     onDownloadTrigger={handleDownloadTrigger}
                                 />
-                                <Pagination 
-                                    currentPage={page} 
-                                    totalPages={totalPages} 
-                                    onPageChange={setPage} 
+                                <Pagination
+                                    currentPage={page}
+                                    totalPages={totalPages}
+                                    onPageChange={setPage}
                                 />
                             </div>
                         )}
@@ -296,6 +228,7 @@ const Dashboard = () => {
             <UploadModal isOpen={isUploadModalOpen} onClose={() => setIsUploadModalOpen(false)} onUploadSuccess={handleUploadSuccess} />
             <RenameModal isOpen={isRenameModalOpen} onClose={() => { setIsRenameModalOpen(false); setActiveRenameItem(null); }} mediaItem={activeRenameItem} onRenameSuccess={handleRenameSuccess} />
             <ShareModal isOpen={isShareModalOpen} onClose={() => { setIsShareModalOpen(false); setActiveShareItem(null); }} mediaItem={activeShareItem} />
+            <DeleteConfirmModal isOpen={isDeleteModalOpen}  mediaItem={deleteTarget}  onConfirm={confirmDelete}  onCancel={cancelDelete} />
         </div>
     );
 };

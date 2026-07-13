@@ -8,7 +8,7 @@ const FilterDropdown = ({ value, onChange }) => (
     >
         <option value="">All Files</option>
         <option value="image">Images</option>
-        <option value="document">Documents</option>
+        <option value="other">Document</option>
         <option value="video">Videos</option>
         <option value="audio">Audio</option>
     </select>
